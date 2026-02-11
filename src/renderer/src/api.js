@@ -1,9 +1,10 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: 'http://localhost:8082/v1',
+    baseURL: 'http://localhost:8082/v1', // Твой порт бэкенда
 });
 
+// Автоматически подставляем токен в каждый запрос
 api.interceptors.request.use(config => {
     const token = localStorage.getItem('token');
     if (token) {
