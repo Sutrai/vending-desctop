@@ -1,49 +1,73 @@
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
-import { Activity, DollarSign, Package } from 'lucide-react';
-
-const MOCK_DATA = [
-  { name: 'Пн', sales: 4000 }, { name: 'Вт', sales: 3000 },
-  { name: 'Ср', sales: 2000 }, { name: 'Чт', sales: 2780 },
-  { name: 'Пт', sales: 1890 }, { name: 'Сб', sales: 2390 },
-];
+import { useEffect, useState } from 'react';
+import api from '../api';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts';
 
 export default function Dashboard() {
-  return (
-    <div className="space-y-8">
-      <h2 className="text-3xl font-bold">Обзор сети</h2>
+  const [data, setData] = useState(null);
 
-      {/* КАРТОЧКИ KPI */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <StatCard label="Выручка" val="150 000 ₽" icon={<DollarSign className="text-green-500"/>} />
-        <StatCard label="Активные ТА" val="42 / 45" icon={<Activity className="text-blue-500"/>} />
-        <StatCard label="Продажи" val="1,240" icon={<Package className="text-orange-500"/>} />
+  useEffect(() => {
+    api.get('/stats/summary').then(res => setData(res.data));
+  }, []);
+
+  if (!data) return <p>Загрузка...</p>;
+
+  return (
+    <div className="grid grid-cols-12 gap-6">
+      {/* 1. Эффективность */}
+      <div className="col-span-4 bg-white p-4 rounded shadow">
+        <h3 className="text-sm font-bold mb-4">Эффективность сети</h3>
+        <div className="h-32 bg-green-500 rounded-t-full relative flex items-end justify-center">
+           <span className="mb-2 font-bold text-white">Работает 100%</span>
+        </div>
       </div>
 
-      {/* ГРАФИК */}
-      <div className="bg-white p-6 rounded-xl shadow-sm border h-96">
-        <h3 className="font-bold text-lg mb-4">Динамика продаж</h3>
-        <ResponsiveContainer width="100%" height="100%">
-          <LineChart data={MOCK_DATA}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} />
-            <XAxis dataKey="name" />
-            <YAxis />
+      {/* 2. Состояние */}
+      <div className="col-span-4 bg-white p-4 rounded shadow flex flex-col items-center">
+        <h3 className="text-sm font-bold mb-2 w-full">Состояние сети</h3>
+        <ResponsiveContainer width="100%" height={150}>
+          <PieChart>
+            <Pie data={data.statuses} innerRadius={40} outerRadius={60} dataKey="value">
+              <Cell fill="#10B981"/><Cell fill="#EF4444"/><Cell fill="#3B82F6"/>
+            </Pie>
             <Tooltip />
-            <Line type="monotone" dataKey="sales" stroke="#3b82f6" strokeWidth={3} dot={{ r: 6 }} />
-          </LineChart>
+          </PieChart>
         </ResponsiveContainer>
       </div>
-    </div>
-  );
-}
 
-function StatCard({ label, val, icon }) {
-  return (
-    <div className="bg-white p-6 rounded-xl shadow-sm border flex justify-between items-center">
-      <div>
-        <p className="text-sm text-gray-500 font-medium">{label}</p>
-        <p className="text-2xl font-bold">{val}</p>
+      {/* 3. Сводка */}
+      <div className="col-span-4 bg-white p-4 rounded shadow text-xs space-y-2">
+        <h3 className="text-sm font-bold mb-4">Сводка</h3>
+        <div className="flex justify-between"><span>Денег в ТА</span><b>{data.cashInMachine} р.</b></div>
+        <div className="flex justify-between"><span>Выручка, сегодня</span><b>{data.revenueToday} р.</b></div>
+        <div className="flex justify-between border-t pt-2 text-blue-600"><span>Выручка, вчера</span><b>{data.revenueYesterday} р.</b></div>
       </div>
-      <div className="p-3 bg-gray-50 rounded-lg">{icon}</div>
+
+      {/* 4. График динамики */}
+      <div className="col-span-8 bg-white p-6 rounded shadow">
+        <h3 className="font-bold mb-4">Динамика продаж за 10 дней</h3>
+        <div className="flex gap-2 mb-4">
+           <button className="bg-blue-500 text-white px-4 py-1 rounded text-xs">По сумме</button>
+           <button className="bg-gray-100 px-4 py-1 rounded text-xs">По количеству</button>
+        </div>
+        <ResponsiveContainer width="100%" height={250}>
+          <BarChart data={data.chartData}>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="day" />
+            <YAxis />
+            <Tooltip />
+            <Bar dataKey="val" fill="#A2E9FF" />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+
+      {/* 5. Новости */}
+      <div className="col-span-4 bg-white p-6 rounded shadow">
+        <h3 className="font-bold mb-4 border-b pb-2">Новости</h3>
+        <div className="space-y-4 text-[10px]">
+          <div><span className="text-gray-400">29.01.25</span> <p className="text-blue-600 underline">Терминалы KitPos получили эквайринг...</p></div>
+          <div><span className="text-gray-400">31.12.24</span> <p className="text-blue-600 underline">Новогоднее поздравление...</p></div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -1,58 +1,50 @@
-import { Link, Outlet, useLocation } from 'react-router-dom';
-import { LayoutDashboard, Monitor, Settings, LogOut, Coffee } from 'lucide-react';
+import { useState } from 'react';
+import { Link, Outlet } from 'react-router-dom';
+import { LayoutDashboard, Monitor, FileText, ShoppingCart, Settings, ChevronDown } from 'lucide-react';
 
-export default function Layout({ onLogout }) {
-  const location = useLocation();
+export default function Layout() {
+  const [openSub, setOpenSub] = useState(null);
 
-  // Функция для активного класса в меню
-  const linkClass = (path) => `
-    flex items-center gap-3 p-3 rounded-lg transition-colors
-    ${location.pathname === path ? 'bg-blue-600 text-white' : 'hover:bg-gray-700 text-gray-300'}
-  `;
+  const toggle = (name) => setOpenSub(openSub === name ? null : name);
+
+  const MenuItem = ({ icon, title, path, children }) => (
+    <div>
+      <div
+        onClick={() => children ? toggle(title) : null}
+        className="flex items-center justify-between p-3 hover:bg-gray-800 cursor-pointer rounded-lg transition"
+      >
+        <Link to={path || '#'} className="flex items-center gap-3">
+          {icon} <span className="text-sm">{title}</span>
+        </Link>
+        {children && <ChevronDown size={14} className={openSub === title ? 'rotate-180' : ''} />}
+      </div>
+      {children && openSub === title && (
+        <div className="ml-10 mt-1 space-y-1 text-gray-400 text-xs">
+          {children.map(child => <Link key={child} to="/" className="block py-2 hover:text-white">{child}</Link>)}
+        </div>
+      )}
+    </div>
+  );
 
   return (
-    <div className="flex h-screen w-full bg-gray-100 overflow-hidden text-gray-900">
-
+    <div className="flex h-screen bg-[#F3F4F6]">
       {/* SIDEBAR */}
-      <aside className="w-64 bg-gray-900 flex flex-col shrink-0">
-        <div className="p-6 text-xl font-bold text-blue-400 flex items-center gap-2">
-          <Coffee /> VENDING PRO
-        </div>
-
-        <nav className="flex-1 px-4 space-y-2">
-          <Link to="/" className={linkClass('/')}>
-            <LayoutDashboard size={20} /> Главная
-          </Link>
-          <Link to="/monitor" className={linkClass('/monitor')}>
-            <Monitor size={20} /> Монитор ТА
-          </Link>
-          <Link to="/ta" className={linkClass('/ta')}>
-            <Settings size={20} /> Автоматы
-          </Link>
-        </nav>
-
-        <button
-          onClick={onLogout}
-          className="m-4 flex items-center gap-3 p-3 text-red-400 hover:bg-red-900/20 rounded-lg transition-colors"
-        >
-          <LogOut size={20} /> Выйти
-        </button>
+      <aside className="w-64 bg-[#1F2937] text-white p-4 flex flex-col gap-4">
+        <div className="text-xl font-bold p-2 border-b border-gray-700 mb-4">Лого</div>
+        <MenuItem icon={<LayoutDashboard size={18}/>} title="Главная" path="/" />
+        <MenuItem icon={<Monitor size={18}/>} title="Монитор ТА" path="/monitor" />
+        <MenuItem icon={<FileText size={18}/>} title="Детальные отчеты" children={['Продажи', 'Инкассация']} />
+        <MenuItem icon={<ShoppingCart size={18}/>} title="Учет ТМЦ" children={['Склады', 'Товары']} />
+        <MenuItem icon={<Settings size={18}/>} title="Администрирование" path="/ta" />
       </aside>
 
-      {/* CONTENT AREA */}
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <header className="h-16 bg-white shadow-sm flex items-center justify-between px-8">
-          <h1 className="text-gray-500 font-medium">Панель управления</h1>
-          <div className="flex items-center gap-3">
-            <span className="font-bold">Администратор</span>
-            <div className="w-10 h-10 bg-blue-500 rounded-full flex items-center justify-center text-white">A</div>
-          </div>
+      {/* CONTENT */}
+      <div className="flex-1 flex flex-col">
+        <header className="h-12 bg-[#2D3748] text-white flex items-center px-6 justify-between">
+          <span className="font-bold">ООО Торговые Автоматы</span>
+          <span className="text-xs text-gray-400">Администратор</span>
         </header>
-
-        <main className="flex-1 overflow-auto p-8">
-          {/* Сюда вставляются страницы Dashboard, TAManager и т.д. */}
-          <Outlet />
-        </main>
+        <main className="p-6 overflow-auto"><Outlet /></main>
       </div>
     </div>
   );
